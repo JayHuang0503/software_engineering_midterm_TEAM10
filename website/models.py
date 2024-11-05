@@ -1,7 +1,7 @@
 from flask_login import UserMixin
 from . import db
 from sqlalchemy.sql import func
-from flask_sqlalchemy import SQLAlchemy#SQLAlchemyclass
+from flask_sqlalchemy import SQLAlchemy
 
 class Students(db.Model, UserMixin):
     __tablename__ = "students"
@@ -27,3 +27,30 @@ class Students(db.Model, UserMixin):
 
     def __repr__(self):
         return f"stuent id: {self.student_id}, name: {self.name}"
+
+class Courses(db.Model):
+    __tablename__ = "courses"
+
+    def __init__(self, course_id, teacher_name, weekday, course_time, lang, course_for) -> None:
+        self.course_id = course_id
+        self.teacher_name = teacher_name
+        self.weekday = weekday
+        self.course_time = course_time
+        self.lang = lang
+        self.course_for = course_for
+
+    def get_id(self):
+        return self.course_id
+
+    course_id = db.Column(db.String(4), primary_key=True)
+    teacher_name = db.Column(db.String(50))
+    weekday = db.Column(db.String(50))
+    course_time = db.Column(db.String(50))
+    lang = db.Column(db.String(50))
+    course_for = db.Column(db.String(50))
+
+    def __repr__(self):
+        return f"course id: {self.course_id}, teacher name: {self.teacher_name}, weekday: {self.weekday}, course time: {self.course_time}, language: {self.lang}, course for: {self.course_for}"
+
+    def to_dict(self):
+        return {field.name:getattr(self, field.name) for field in self.__table__.c}

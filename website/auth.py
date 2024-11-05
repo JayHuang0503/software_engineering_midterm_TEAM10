@@ -46,7 +46,7 @@ auth = Blueprint("auth", __name__)
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("views.login_page"))
+    return redirect(url_for("auth.login"))
 
 
 @auth.route("/login", methods=["GET", "POST"])
@@ -60,8 +60,9 @@ def login():
         if student != None:
             flash("Logged in.", category="success")
             login_user(student, remember=True)
-            return redirect(url_for("views.you_logged_in"))
+            return redirect(url_for("views.home"))
         else:
             flash(f"Student [{student_id}] does not exist.", category="error")
-
-    return render_template("login.html", user=current_user)
+            return redirect(url_for("auth.login"))
+    else:
+        return render_template("login.html", user=current_user)

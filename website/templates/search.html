@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<style>
+</style>
+<div align="center">
+    <h1 align="left">Search</h1>
+    {% if user.is_authenticated %}
+    <form method="POST">
+        <div class="mb-3">
+            <label for="courseId" class="form-label">課程代碼</label>
+            <input type="text" name="course_id" class="form-control" id="courseId">
+        </div>
+        <div class="mb-3">
+            <label for="teacherName" class="form-label">教師姓名</label>
+            <input type="text" name="teacher_name" class="form-control" id="teacherName">
+        </div>
+        <div class="mb-3">
+            <label for="weekday" class="form-label">星期</label>
+            <select name="weekday" class="form-select" id="weekday">
+            <option value="0" selected>請選擇星期</option>
+            <option value="1">一</option>
+            <option value="2">二</option>
+            <option value="3">三</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="courseTime" class="form-label">節次</label>
+            <select name="course_time" class="form-select" id="courseTime">
+            <option value="0" selected>請選擇節次</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="lang" class="form-label">授課語言</label>
+            <select name="lang" class="form-select" id="lang">
+            <option value="0" selected>請選擇授課語言</option>
+            <option value="英文">英文</option>
+            <option value="英文">英文</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="courseFor" class="form-label">開課班級</label>
+            <input type="text" name="course_for" class="form-control" id="courseFor">
+        </div>
+        <button type="submit" class="btn btn-primary">搜尋</button>
+    </form>
+
+    <div>
+        <ul>
+        {% for target_course in target_courses %}
+            <li>{{target_course}}</li>
+        {% endfor %}
+    </ul>
+    </div>
+
+    {% else %}
+    <h1>Please login</h1>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block footer %}
+{% include 'footer.html' %}
+{% endblock %}
