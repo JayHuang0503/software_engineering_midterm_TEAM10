@@ -31,8 +31,9 @@ class Students(db.Model, UserMixin):
 class Courses(db.Model):
     __tablename__ = "courses"
 
-    def __init__(self, course_id, teacher_name, weekday, course_time, lang, course_for) -> None:
+    def __init__(self, course_id, course_name, teacher_name, weekday, course_time, lang, course_for) -> None:
         self.course_id = course_id
+        self.course_name = course_name
         self.teacher_name = teacher_name
         self.weekday = weekday
         self.course_time = course_time
@@ -43,6 +44,7 @@ class Courses(db.Model):
         return self.course_id
 
     course_id = db.Column(db.String(4), primary_key=True)
+    course_name = db.Column(db.String(50))
     teacher_name = db.Column(db.String(50))
     weekday = db.Column(db.String(50))
     course_time = db.Column(db.String(50))
@@ -50,7 +52,7 @@ class Courses(db.Model):
     course_for = db.Column(db.String(50))
 
     def __repr__(self):
-        return f"course id: {self.course_id}, teacher name: {self.teacher_name}, weekday: {self.weekday}, course time: {self.course_time}, language: {self.lang}, course for: {self.course_for}"
+        return f"course id: {self.course_id}, course name: {self.course_name}, teacher name: {self.teacher_name}, weekday: {self.weekday}, course time: {self.course_time}, language: {self.lang}, course for: {self.course_for}"
 
     def to_dict(self):
         return {field.name:getattr(self, field.name) for field in self.__table__.c}

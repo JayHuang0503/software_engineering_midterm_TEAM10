@@ -21,6 +21,8 @@ def search():
         # Get search criteria
         course_id = request.form.get("course_id") or None
 
+        course_name = request.form.get("course_name") or None
+
         teacher_name = request.form.get("teacher_name") or None
 
         weekday = request.form.get("weekday")
@@ -40,6 +42,8 @@ def search():
         filters = []
         if course_id != None:
             filters.append(Courses.course_id == course_id)
+        if course_name != None:
+            filters.append(Courses.course_nam.like('%'+course_name+'%'))
         if teacher_name != None:
             filters.append(Courses.teacher_name.like('%'+teacher_name+'%'))
         if weekday != None:
@@ -53,16 +57,23 @@ def search():
             filters.append(Courses.course_for.like('%'+course_for+'%'))
 
         # Query
-        target_courses = []
+        target = []
         # Has some criterias
         if filters:
-            target_courses = Courses.query.filter(and_(*filters)).all()
+            target = Courses.query.filter(and_(*filters)).all()
+            if len(target) == 0:
+                target = None
         # Empty criteria, then show all courses
         else:
-            target_courses = Courses.query.all()
+            target = Courses.query.all()
 
-        for target_course in target_courses:
-            print(target_course)
-        return render_template("search.html", user=current_user, target_courses=target_courses)
+        # if target != None:
+        #     for course in target:
+        #         for keys,values in course.__dict__.items():
+        #             print(f"{keys}: {values}")
+        if target != None:
+            for i in range(len(target)):
+                target[i] = target[i].__dict__
+        return render_template("search.html", user=current_user, target_courses=target)
     else:
-        return render_template("search.html", user=current_user)
+        return render_template("search.html", user=current_user, first_time=True)
