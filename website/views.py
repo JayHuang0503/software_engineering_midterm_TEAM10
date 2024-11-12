@@ -43,7 +43,7 @@ def search():
         if course_id != None:
             filters.append(Courses.course_id == course_id)
         if course_name != None:
-            filters.append(Courses.course_nam.like('%'+course_name+'%'))
+            filters.append(Courses.course_name.like('%'+course_name+'%'))
         if teacher_name != None:
             filters.append(Courses.teacher_name.like('%'+teacher_name+'%'))
         if weekday != None:
