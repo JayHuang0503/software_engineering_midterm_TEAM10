@@ -67,13 +67,19 @@ def search():
         else:
             target = Courses.query.all()
 
-        # if target != None:
-        #     for course in target:
-        #         for keys,values in course.__dict__.items():
-        #             print(f"{keys}: {values}")
         if target != None:
             for i in range(len(target)):
                 target[i] = target[i].__dict__
         return render_template("search.html", user=current_user, target_courses=target)
     else:
         return render_template("search.html", user=current_user, first_time=True)
+
+@views.route('/course/<course_id>', methods=["GET", "POST"])
+def course_content(course_id):
+    if request.method == "POST":
+        pass
+    else:
+        target_course = Courses.query.filter_by(course_id=course_id).first()
+        target_course = target_course.__dict__
+        print(target_course)
+        return render_template("course_content.html", user=current_user, target_course=target_course)
