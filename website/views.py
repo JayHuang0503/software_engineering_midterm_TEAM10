@@ -77,3 +77,9 @@ def search():
         return render_template("search.html", user=current_user, target_courses=target)
     else:
         return render_template("search.html", user=current_user, first_time=True)
+
+@login_required
+@views.route('/withdraw', methods=["POST"])
+def withdraw():
+    course_id = request.form.get("course_id")
+    course = Courses.query.filter_by(course_id=course_id).first()
