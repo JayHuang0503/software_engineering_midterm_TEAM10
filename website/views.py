@@ -116,3 +116,24 @@ def withdraw():
     db.session.commit()
     flash("退選成功")
     return redirect(url_for("views.selections")) ###要回到我的課表
+
+@login_required
+@views.route('/add/<course_id>', methods=["GET", "POST"])
+
+def add_selection(course_id):
+    course = Courses.query.filter_by(course_id=course_id).first()
+    if current_user.getTotalCredits() + course.credit > 25:
+        flash("學分數不得高於25學分")
+        return redirect(url_for("views.search"))
+    selection=Selections(current_user.student_id,course_id) #新增一個要加到資料庫的資料
+    if course.remaining_quota>=1:
+        db.session.add(selection)
+        #Selections.query.filter_by(student_id=current_user.student_id, course_id=course_id).append()
+        course.remaining_quota-=1
+        db.session.commit() #更新至資料庫內
+        flash("加選成功")
+        return redirect(url_for("views.search")) 
+    else:
+        flash("餘額不足")
+        return redirect(url_for("views.search")) 
+    
