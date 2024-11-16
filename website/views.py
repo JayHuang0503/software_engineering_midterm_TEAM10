@@ -121,22 +121,49 @@ def withdraw():
 @views.route('/schedule')
 @login_required
 def personal_schedule():
-    # 預設課表結構
+    # 準備課表數據結構
     schedule = defaultdict(list)
+    total_credits = 0
+    counted_courses = set()  # 用來避免同一堂課重複累加學分
 
-    # 獲取當前學生的選課
-    selections = Selections.query.filter_by(student_id=current_user.student_id).all()
-    for selection in selections:
-        course = Courses.query.get(selection.course_id)
-        if course:
-            # 分析課程的 weekday 和 course_time
-            weekdays = course.weekday.split(";")  # e.g., "1;3"
-            periods_list = course.course_time.split(";")  # e.g., "2,3,4;7,8"
-            for weekday, periods in zip(weekdays, periods_list):
-                for period in map(int, periods.split(",")):
-                    schedule[(int(weekday), period)].append(course)
-    
-    return render_template("schedule.html", user=current_user, schedule=schedule)
+    # 獲取當前學生的已加選課程和關注清單
+    added_courses = {s.course_id: s for s in Selections.query.filter_by(student_id=current_user.student_id).all()}
+    followed_courses = {c.course_id: c for c in Courses.query.filter(Courses.course_id.in_(["0010", "0011"])).all()}  # 示例關注課程
+
+    # 分析所有相關課程
+    for course in Courses.query.all():
+        weekdays = course.weekday.split(";")
+        periods_list = course.course_time.split(";")
+        for weekday, periods in zip(weekdays, periods_list):
+            for period in map(int, periods.split(",")):
+                is_added = course.course_id in added_courses
+                is_followed = course.course_id in followed_courses and not is_added
+                is_conflict = False
+
+                # 判斷是否衝堂
+                if is_added:
+                    for other in schedule.get((int(weekday), period), []):
+                        if other["is_added"]:
+                            is_conflict = True
+                            other["is_conflict"] = True
+
+                # 累積學分
+                if is_added and course.course_id not in counted_courses:
+                    total_credits += course.credit
+                    counted_courses.add(course.course_id)  # 確保學分只累加一次
+
+                # 添加課程到課表
+                schedule[(int(weekday), period)].append({
+                    "course_name": course.course_name,
+                    "teacher_name": course.teacher_name,
+                    "credit": course.credit,
+                    "is_added": is_added,
+                    "is_followed": is_followed,
+                    "is_conflict": is_conflict
+                })
+
+    return render_template("schedule.html", user=current_user, schedule=schedule, total_credits=total_credits)
+
 @login_required
 @views.route('/add/<course_id>', methods=["GET", "POST"])
 
