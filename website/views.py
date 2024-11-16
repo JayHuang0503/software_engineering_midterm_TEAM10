@@ -80,6 +80,25 @@ def course_content(course_id):
         pass
     else:
         target_course = Courses.query.filter_by(course_id=course_id).first()
+        # Turn into dict
         target_course = target_course.__dict__
+        # Make weekday to chinese
+        new_weekday = ""
+        for day in target_course["weekday"]:
+            if day == "1": new_weekday += "一"
+            elif day == "2": new_weekday += "二"
+            elif day == "3": new_weekday += "三"
+            elif day == "4": new_weekday += "四"
+            elif day == "5": new_weekday += "五"
+            elif day == "6": new_weekday += "六"
+            elif day == "7": new_weekday += "日"
+            elif day == ";": new_weekday += "、"
+        target_course["weekday"] = new_weekday
+        # Make course time better to view
+        new_course_time = ""
+        for t in target_course["course_time"]:
+            if t == ";": new_course_time += "、"
+            else: new_course_time += t
+        target_course["course_time"] = new_course_time
         print(target_course)
         return render_template("course_content.html", user=current_user, target_course=target_course)

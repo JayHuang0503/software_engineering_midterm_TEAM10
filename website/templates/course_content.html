@@ -6,9 +6,6 @@
 <h1 align="left">Course Content</h1>
 
 <div>
-    {{target_course["course_id"]}}
-    {{target_course["course_name"]}}
-
     <table class="table table-striped table-hover">
         <tr>
             <th scope="row">課程代碼</th>
@@ -31,6 +28,14 @@
             <td>{{target_course["teacher_name"]}}</td>
         </tr>
         <tr>
+            <th scope="col">剩餘名額</th>
+            <td>{{target_course["remaining_quota"]}}</td>
+        </tr>
+        <tr>
+            <th scope="col">開課名額</th>
+            <td>{{target_course["course_quota"]}}</td>
+        </tr>
+        <tr>
             <th scope="col">星期</th>
             <td>{{target_course["weekday"]}}</td>
         </tr>
@@ -47,6 +52,38 @@
             <td>{{target_course["course_for"]}}</td>
         </tr>
     </table>
+</div>
+
+<br>
+<div>
+    <h3>課程大綱</h3>
+    <p style="font-size: large; padding-left: 8%">
+        此課程的名稱為{{target_course["course_name"]}}，
+        <br>
+        此課程的授課內容主要為此課程的授課內容，詳細的授課內容可以詳閱此課程的授課進度。
+        <br>
+        在這門課中，認真聽課肯定會聽到東西，認真寫筆記肯定會耗掉筆芯。
+        <br>
+        根據過往的經驗，參與這門課的學生們在未來也將成為過往的經驗
+        <br>
+        期望各位同學在學習的過程中，有在學習。
+    </p>
+</div>
+
+<br>
+<div>
+    <h3>課程進度</h3>
+    <p style="font-size: large; padding-left: 8%">
+        參閱課程大綱
+    </p>
+</div>
+
+<br>
+<div>
+    <h3>評分標準</h3>
+    <p style="font-size: large; padding-left: 8%">
+        由電腦隨機選擇您的本學期的總分
+    </p>
 </div>
 <button onclick="window.history.back()" class="btn btn-primary">返回</button>
 
