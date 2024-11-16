@@ -96,9 +96,11 @@
             ">
                 {% if courses %}
                     {% for course in courses %}
-                        <div>
-                            <strong>{{ course.course_name }}</strong><br>
-                        </div>
+                        {% if course.is_added or course.is_followed %}
+                            <div>
+                                <strong>{{ course.course_name }}</strong><br>
+                            </div>
+                        {% endif %}
                     {% endfor %}
                 {% else %}
                     <div class="empty-cell"></div>

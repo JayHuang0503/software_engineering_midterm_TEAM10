@@ -127,8 +127,8 @@ def personal_schedule():
     counted_courses = set()  # 用來避免同一堂課重複累加學分
 
     # 獲取當前學生的已加選課程和關注清單
-    added_courses = {s.course_id: s for s in Selections.query.filter_by(student_id=current_user.student_id).all()}
-    followed_courses = {c.course_id: c for c in Courses.query.filter(Courses.course_id.in_(["0010", "0011"])).all()}  # 示例關注課程
+    added_courses = {s.course_id: s for s in Selections.query.filter_by(student_id=current_user.student_id, class_state="加選").all()}
+    followed_courses = {s.course_id: s for s in Selections.query.filter_by(student_id=current_user.student_id, class_state="關注").all()}
 
     # 分析所有相關課程
     for course in Courses.query.all():
@@ -137,13 +137,13 @@ def personal_schedule():
         for weekday, periods in zip(weekdays, periods_list):
             for period in map(int, periods.split(",")):
                 is_added = course.course_id in added_courses
-                is_followed = course.course_id in followed_courses and not is_added
+                is_followed = course.course_id in followed_courses
                 is_conflict = False
 
                 # 判斷是否衝堂
-                if is_added:
+                if is_added or is_followed:
                     for other in schedule.get((int(weekday), period), []):
-                        if other["is_added"]:
+                        if other["is_added"] or other["is_followed"]:
                             is_conflict = True
                             other["is_conflict"] = True
 
