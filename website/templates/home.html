@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<style>
+</style>
+<div>
+    {% if user.is_authenticated %}
+    <h2>Welcome, {{user.name}}</h2>
+    <a href="/search">搜尋課程</a>
+    <a href="#">個人課表</a>
+
+    {% else %}
+    <h1>This is home page, please login to manage your courses</h1>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block footer %}
+{% include 'footer.html' %}
+{% endblock %}
