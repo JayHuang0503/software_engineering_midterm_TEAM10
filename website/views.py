@@ -71,6 +71,20 @@ def search():
         if target != None:
             for i in range(len(target)):
                 target[i] = target[i].__dict__
+        if target:
+            for i in range(len(target)):
+                target[i] = target[i].__dict__
+
+                # 檢查課程是否已加選或已關注
+                existing_selection = Selections.query.filter_by(
+                    student_id=current_user.student_id,
+                    course_id=target[i]['course_id']
+                ).first()
+                if existing_selection:
+                    target[i]['class_state'] = existing_selection.class_state  # 設置狀態
+                else:
+                    target[i]['class_state'] = None
+                    
         return render_template("search.html", user=current_user, target_courses=target)
     else:
         return render_template("search.html", user=current_user, first_time=True)
@@ -157,3 +171,35 @@ def add_selection(course_id):
         flash("餘額不足")
         return redirect(url_for("views.search")) 
     
+@login_required
+@views.route('/follow/<course_id>', methods=["GET", "POST"])
+def add_follow(course_id):
+    """
+    - 如果課程已加選或已關注，阻止再次關注。
+    """
+    # 查詢是否已存在選課紀錄
+    existing_selection = Selections.query.filter_by(
+        student_id=current_user.student_id,
+        course_id=course_id
+    ).first()
+
+    # 若課程已加選或已關注，阻止操作
+    if existing_selection:
+        if existing_selection.class_state == "加選":
+            flash("課程已加選，無法再次關注")
+            return redirect(url_for("views.search"))
+        elif existing_selection.class_state == "關注":
+            flash("課程已關注，無法重複關注")
+            return redirect(url_for("views.search"))
+
+    # 新增關注記錄
+    new_selection = Selections(
+        student_id=current_user.student_id,
+        course_id=course_id,
+        class_state="關注"
+    )
+    db.session.add(new_selection)
+    db.session.commit()
+
+    flash("課程關注成功")
+    return redirect(url_for("views.search"))

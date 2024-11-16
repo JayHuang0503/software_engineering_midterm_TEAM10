@@ -87,22 +87,23 @@ class Courses(db.Model):
     def to_dict(self):
         return {field.name:getattr(self, field.name) for field in self.__table__.c}
 
-class Selections(db.Model): # 學生選上的課程
+class Selections(db.Model):  
     '''
     Attributes:
         student_id : 學號, string
         course_id  : 課程代碼, string
-        class_state: 課程狀態 已加選/關注, string
+        class_state: 課程狀態 加選/關注, string
     '''
     __tablename__ = "selections"
 
-    def __init__(self, student_id, course_id):
+    def __init__(self, student_id, course_id, class_state):
         self.student_id = student_id
         self.course_id = course_id
-        # self.class_state = class_state
+        self.class_state = class_state
     
     student_id = db.Column(db.String(6), db.ForeignKey("students.student_id"), primary_key=True)
     course_id = db.Column(db.String(4), db.ForeignKey("courses.course_id"), primary_key=True)
+    class_state = db.Column(db.String(20), nullable=False)  # 加選或關注
 
     def __repr__(self):
-        return f"student id: {self.student_id}, course id: {self.course_id}"
+        return f"student id: {self.student_id}, course id: {self.course_id}, class state: {self.class_state}"
