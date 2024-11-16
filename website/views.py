@@ -3,6 +3,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import or_, and_
 from . import db
 from .models import Courses, Selections
+from collections import defaultdict
 
 views = Blueprint("views", __name__)
 
@@ -117,6 +118,25 @@ def withdraw():
     flash("退選成功")
     return redirect(url_for("views.selections")) ###要回到我的課表
 
+@views.route('/schedule')
+@login_required
+def personal_schedule():
+    # 預設課表結構
+    schedule = defaultdict(list)
+
+    # 獲取當前學生的選課
+    selections = Selections.query.filter_by(student_id=current_user.student_id).all()
+    for selection in selections:
+        course = Courses.query.get(selection.course_id)
+        if course:
+            # 分析課程的 weekday 和 course_time
+            weekdays = course.weekday.split(";")  # e.g., "1;3"
+            periods_list = course.course_time.split(";")  # e.g., "2,3,4;7,8"
+            for weekday, periods in zip(weekdays, periods_list):
+                for period in map(int, periods.split(",")):
+                    schedule[(int(weekday), period)].append(course)
+    
+    return render_template("schedule.html", user=current_user, schedule=schedule)
 @login_required
 @views.route('/add/<course_id>', methods=["GET", "POST"])
 

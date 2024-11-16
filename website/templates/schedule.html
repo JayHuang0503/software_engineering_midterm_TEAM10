@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}個人課表{% endblock %}
+
+{% block content %}
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #ddd;
+        text-align: center;
+        padding: 8px;
+    }
+
+    th {
+        background-color: #f4f4f4;
+        font-weight: bold;
+    }
+
+    td {
+        height: 80px; /* Set a minimum height for table cells */
+    }
+
+    .course-info {
+        font-size: small;
+    }
+
+    .empty-cell {
+        background-color: #f9f9f9;
+    }
+</style>
+
+<h1 align="center">個人課表</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>節次</th>
+            <th>星期一</th>
+            <th>星期二</th>
+            <th>星期三</th>
+            <th>星期四</th>
+            <th>星期五</th>
+            <th>星期六</th>
+            <th>星期日</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for period in range(1, 15) %}
+        <tr>
+            <th>第{{ period }}節</th>
+            {% for weekday in range(1, 8) %}
+            <td>
+                {% set courses = schedule.get((weekday, period), []) %}
+                {% if courses %}
+                    {% for course in courses %}
+                        <div class="course-info">
+                            <strong>{{ course.course_name }}</strong><br>
+                            {{ course.teacher_name }}<br>
+                            {{ course.credit }} 學分
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-cell"></div>
+                {% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<button onclick="window.history.back()" class="btn btn-primary mt-3">返回</button>
+{% endblock %}
