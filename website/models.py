@@ -21,6 +21,16 @@ class Students(db.Model, UserMixin):
     student_id = db.Column(db.String(6), primary_key=True)
     name = db.Column(db.String(50))
 
+    selections = db.relationship('Selections', backref='student', lazy=True)
+    
+    def getTotalCredits(self): # 取得學生學分數
+        totalCredits = 0
+        for selection in self.selections:
+            course = Courses.query.get(selection.course_id)
+            if course:
+                totalCredits += course.credit
+        return totalCredits
+
     def __repr__(self):
         return f"stuent id: {self.student_id}, name: {self.name}"
 
@@ -74,3 +84,21 @@ class Courses(db.Model):
 
     def to_dict(self):
         return {field.name:getattr(self, field.name) for field in self.__table__.c}
+
+class Selections(db.Model): # 學生選上的課程
+    '''
+    Attributes:
+        student_id : 學號, string
+        course_id  : 課程代碼, string
+    '''
+    __tablename__ = "selections"
+
+    def __init__(self, student_id, course_id):
+        self.student_id = student_id
+        self.course_id = course_id
+    
+    student_id = db.Column(db.String(6), db.ForeignKey("students.student_id"), primary_key=True)
+    course_id = db.Column(db.String(4), db.ForeignKey("courses.course_id"), primary_key=True)
+
+    def __repr__(self):
+        return f"student id: {self.student_id}, course id: {self.course_id}"
