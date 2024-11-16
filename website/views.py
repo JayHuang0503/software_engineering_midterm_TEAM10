@@ -71,20 +71,6 @@ def search():
         if target != None:
             for i in range(len(target)):
                 target[i] = target[i].__dict__
-        if target:
-            for i in range(len(target)):
-                target[i] = target[i].__dict__
-
-                # 檢查課程是否已加選或已關注
-                existing_selection = Selections.query.filter_by(
-                    student_id=current_user.student_id,
-                    course_id=target[i]['course_id']
-                ).first()
-                if existing_selection:
-                    target[i]['class_state'] = existing_selection.class_state  # 設置狀態
-                else:
-                    target[i]['class_state'] = None
-                    
         return render_template("search.html", user=current_user, target_courses=target)
     else:
         return render_template("search.html", user=current_user, first_time=True)
@@ -153,23 +139,56 @@ def personal_schedule():
     return render_template("schedule.html", user=current_user, schedule=schedule)
 @login_required
 @views.route('/add/<course_id>', methods=["GET", "POST"])
-
 def add_selection(course_id):
+    # 查詢課程資料
     course = Courses.query.filter_by(course_id=course_id).first()
+    if not course:
+        flash("課程不存在")
+        return redirect(url_for("views.search"))
+
+    # 檢查學分是否超出限制
     if current_user.getTotalCredits() + course.credit > 25:
         flash("學分數不得高於25學分")
         return redirect(url_for("views.search"))
-    selection=Selections(current_user.student_id,course_id) #新增一個要加到資料庫的資料
-    if course.remaining_quota>=1:
-        db.session.add(selection)
-        #Selections.query.filter_by(student_id=current_user.student_id, course_id=course_id).append()
-        course.remaining_quota-=1
-        db.session.commit() #更新至資料庫內
+
+    # 查詢學生選課記錄
+    existing_selection = Selections.query.filter_by(
+        student_id=current_user.student_id,
+        course_id=course_id
+    ).first()
+
+    # 已存在選課記錄的情況處理
+    if existing_selection:
+        if existing_selection.class_state == "加選":
+            flash("課程已加選")
+            return redirect(url_for("views.search"))
+        elif existing_selection.class_state == "關注":
+            # 更新關注狀態為加選
+            existing_selection.class_state = "加選"
+            if course.remaining_quota >= 1:
+                course.remaining_quota -= 1
+                db.session.commit()
+                flash("課程已成功從關注狀態更新為加選")
+                return redirect(url_for("views.search"))
+            else:
+                flash("課程餘額不足")
+                return redirect(url_for("views.search"))
+
+    # 處理加選邏輯（沒有選課記錄的情況）
+    if course.remaining_quota >= 1:
+        new_selection = Selections(
+            student_id=current_user.student_id,
+            course_id=course_id,
+            class_state="加選"
+        )
+        db.session.add(new_selection)
+        course.remaining_quota -= 1
+        db.session.commit()
         flash("加選成功")
-        return redirect(url_for("views.search")) 
+        return redirect(url_for("views.search"))
     else:
-        flash("餘額不足")
-        return redirect(url_for("views.search")) 
+        flash("課程餘額不足")
+        return redirect(url_for("views.search"))
     
 @login_required
 @views.route('/follow/<course_id>', methods=["GET", "POST"])

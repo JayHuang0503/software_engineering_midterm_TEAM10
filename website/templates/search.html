@@ -103,16 +103,6 @@
                 <!-- <td>{{target_course["lang"]}}</td> -->
                 <td>{{target_course["course_for"]}}</td>
                 <td>{{target_course["remaining_quota"]}} / {{target_course["course_quota"]}}</td>
-                <td>
-                    {% if target_course['class_state'] == "加選" %}
-                        <a class="btn btn-success" disabled>已加選</a>
-                    {% elif target_course['class_state'] == "關注" %}
-                        <a class="btn btn-warning" disabled>已關注</a>
-                    {% else %}
-                        <a href="{{ url_for('views.add_follow', course_id=target_course['course_id']) }}" 
-                           class="btn btn-outline-dark">關注</a>
-                    {% endif %}
-                </td>
                 <td><a href="follow/{{target_course['course_id']}}" class="btn btn-outline-dark">關注</a></td>
                 <td><a href="add/{{target_course['course_id']}}"  class="btn btn-primary">加選</a></td>
             </tr>
