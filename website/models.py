@@ -79,7 +79,7 @@ class Courses(db.Model):
     lang = db.Column(db.String(50))
     course_for = db.Column(db.String(50))
 
-    class_state = db.Column(db.String(50))
+    # class_state = db.Column(db.String(50))
 
     def __repr__(self):
         return f"course id: {self.course_id}, course name: {self.course_name}, teacher name: {self.teacher_name}, credit: {self.credit}, course type: {self.course_type}, course quota: {self.course_quota}, remaining quota: {self.remaining_quota}, weekday: {self.weekday}, course time: {self.course_time}, language: {self.lang}, course for: {self.course_for}"
@@ -96,10 +96,10 @@ class Selections(db.Model): # 學生選上的課程
     '''
     __tablename__ = "selections"
 
-    def __init__(self, student_id, course_id, class_state):
+    def __init__(self, student_id, course_id):
         self.student_id = student_id
         self.course_id = course_id
-        self.class_state = class_state
+        # self.class_state = class_state
     
     student_id = db.Column(db.String(6), db.ForeignKey("students.student_id"), primary_key=True)
     course_id = db.Column(db.String(4), db.ForeignKey("courses.course_id"), primary_key=True)
