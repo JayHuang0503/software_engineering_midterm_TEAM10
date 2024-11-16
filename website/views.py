@@ -2,7 +2,7 @@ from flask import Blueprint, request, flash, redirect, url_for, render_template,
 from flask_login import current_user, login_required
 from sqlalchemy import or_, and_
 from . import db
-from .models import Courses
+from .models import Courses, Selections
 
 views = Blueprint("views", __name__)
 
@@ -102,3 +102,17 @@ def course_content(course_id):
         target_course["course_time"] = new_course_time
         print(target_course)
         return render_template("course_content.html", user=current_user, target_course=target_course)
+    
+@login_required
+@views.route('/withdraw/<course_id>', methods=["POST"])
+def withdraw():
+    course_id = request.form.get("course_id")
+    course = Courses.query.filter_by(course_id=course_id).first()
+    if current_user.getTotalCredits() - course.credit < 12: # 學分數不得低於12學分
+        flash("學分數不得低於12學分")
+        return redirect(url_for("views.selections")) ###要回到我的課表
+    
+    Selections.query.filter_by(student_id=current_user.student_id, course_id=course_id).delete()
+    db.session.commit()
+    flash("退選成功")
+    return redirect(url_for("views.selections")) ###要回到我的課表
