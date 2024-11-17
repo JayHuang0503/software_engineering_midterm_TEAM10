@@ -144,18 +144,22 @@ def course_content(course_id):
         return render_template("course_content.html", user=current_user, target_course=target_course)
 
 @login_required
-@views.route('/withdraw/<course_id>', methods=["POST"])
-def withdraw():
-    course_id = request.form.get("course_id")
+@views.route('/withdraw/<course_id>', methods=["GET", "POST"])
+def withdraw(course_id):
     course = Courses.query.filter_by(course_id=course_id).first()
-    if current_user.getTotalCredits() - course.credit < 12: # 學分數不得低於12學分
-        flash("學分數不得低於12學分")
-        return redirect(url_for("views.selections")) ###要回到我的課表
 
-    Selections.query.filter_by(student_id=current_user.student_id, course_id=course_id).delete()
-    db.session.commit()
-    flash("退選成功")
-    return redirect(url_for("views.selections")) ###要回到我的課表
+    if request.method == "GET":
+        if current_user.getTotalCredits() - course.credit < 12: # 學分數不得低於12學分
+            flash("學分數不得低於12學分")
+            return redirect(url_for("views.personal_schedule"))
+        return render_template("withdrawConfirm.html", user=current_user, course=course)
+    
+    elif request.method == "POST":
+        course.remaining_quota += 1
+        Selections.query.filter_by(student_id=current_user.student_id, course_id=course_id).delete()
+        db.session.commit()
+        flash("退選成功")
+        return redirect(url_for("views.personal_schedule")) 
 
 @login_required
 @views.route('/schedule')
@@ -178,6 +182,10 @@ def personal_schedule():
                 is_added = course.course_id in added_courses
                 is_followed = course.course_id in followed_courses
                 is_conflict = False
+                if course.course_type == "必修":
+                    is_necessary = True
+                else:
+                    is_necessary = False
 
                 # 判斷是否衝堂
                 if is_added or is_followed:
@@ -193,12 +201,14 @@ def personal_schedule():
 
                 # 添加課程到課表
                 schedule[(int(weekday), period)].append({
+                    "course_id": course.course_id,
                     "course_name": course.course_name,
                     "teacher_name": course.teacher_name,
                     "credit": course.credit,
                     "is_added": is_added,
                     "is_followed": is_followed,
-                    "is_conflict": is_conflict
+                    "is_conflict": is_conflict,
+                    "is_necessary": is_necessary
                 })
 
     return render_template("schedule.html", user=current_user, schedule=schedule, total_credits=total_credits)
