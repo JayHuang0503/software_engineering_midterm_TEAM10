@@ -164,6 +164,8 @@ def personal_schedule():
 
     return render_template("schedule.html", user=current_user, schedule=schedule, total_credits=total_credits)
 
+from collections import defaultdict
+
 @login_required
 @views.route('/add/<course_id>', methods=["GET", "POST"])
 def add_selection(course_id):
@@ -173,9 +175,28 @@ def add_selection(course_id):
         flash("課程不存在")
         return redirect(url_for("views.search"))
 
+    # 解析欲加選課程的時間
+    course_weekday = course.weekday  # 課程的星期幾
+    course_time = course.course_time  # 課程的時間段，例如 "08:00-10:00"
+
     # 檢查學分是否超出限制
     if current_user.getTotalCredits() + course.credit > 25:
         flash("學分數不得高於25學分")
+        return redirect(url_for("views.search"))
+
+    # 查詢學生已加選課程
+    added_courses = Selections.query.filter_by(student_id=current_user.student_id, class_state="加選").all()
+
+    # 建立學生已選課程的時間表
+    schedule = defaultdict(list)
+    for selected in added_courses:
+        selected_course = Courses.query.filter_by(course_id=selected.course_id).first()
+        if selected_course:
+            schedule[selected_course.weekday].append(selected_course.course_time)
+
+    # 檢查是否與已選課程時間衝突
+    if course_time in schedule[course_weekday]:
+        flash("加選失敗，課程時間與已選課程衝突")
         return redirect(url_for("views.search"))
 
     # 查詢學生選課記錄
@@ -187,7 +208,7 @@ def add_selection(course_id):
     # 已存在選課記錄的情況處理
     if existing_selection:
         if existing_selection.class_state == "加選":
-            flash("課程已加選")
+            flash("加選失敗，課程已加選")
             return redirect(url_for("views.search"))
         elif existing_selection.class_state == "關注":
             # 更新關注狀態為加選
@@ -216,6 +237,7 @@ def add_selection(course_id):
     else:
         flash("課程餘額不足")
         return redirect(url_for("views.search"))
+
     
 @login_required
 @views.route('/follow/<course_id>', methods=["GET", "POST"])
