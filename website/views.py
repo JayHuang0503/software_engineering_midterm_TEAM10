@@ -3,6 +3,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import or_, and_
 from . import db
 from .models import Courses, Selections
+from collections import defaultdict
 
 views = Blueprint("views", __name__)
 
@@ -117,23 +118,134 @@ def withdraw():
     flash("退選成功")
     return redirect(url_for("views.selections")) ###要回到我的課表
 
+@views.route('/schedule')
+@login_required
+def personal_schedule():
+    # 準備課表數據結構
+    schedule = defaultdict(list)
+    total_credits = 0
+    counted_courses = set()  # 用來避免同一堂課重複累加學分
+
+    # 獲取當前學生的已加選課程和關注清單
+    added_courses = {s.course_id: s for s in Selections.query.filter_by(student_id=current_user.student_id, class_state="加選").all()}
+    followed_courses = {s.course_id: s for s in Selections.query.filter_by(student_id=current_user.student_id, class_state="關注").all()}
+
+    # 分析所有相關課程
+    for course in Courses.query.all():
+        weekdays = course.weekday.split(";")
+        periods_list = course.course_time.split(";")
+        for weekday, periods in zip(weekdays, periods_list):
+            for period in map(int, periods.split(",")):
+                is_added = course.course_id in added_courses
+                is_followed = course.course_id in followed_courses
+                is_conflict = False
+
+                # 判斷是否衝堂
+                if is_added or is_followed:
+                    for other in schedule.get((int(weekday), period), []):
+                        if other["is_added"] or other["is_followed"]:
+                            is_conflict = True
+                            other["is_conflict"] = True
+
+                # 累積學分
+                if is_added and course.course_id not in counted_courses:
+                    total_credits += course.credit
+                    counted_courses.add(course.course_id)  # 確保學分只累加一次
+
+                # 添加課程到課表
+                schedule[(int(weekday), period)].append({
+                    "course_name": course.course_name,
+                    "teacher_name": course.teacher_name,
+                    "credit": course.credit,
+                    "is_added": is_added,
+                    "is_followed": is_followed,
+                    "is_conflict": is_conflict
+                })
+
+    return render_template("schedule.html", user=current_user, schedule=schedule, total_credits=total_credits)
+
 @login_required
 @views.route('/add/<course_id>', methods=["GET", "POST"])
-
 def add_selection(course_id):
+    # 查詢課程資料
     course = Courses.query.filter_by(course_id=course_id).first()
+    if not course:
+        flash("課程不存在")
+        return redirect(url_for("views.search"))
+
+    # 檢查學分是否超出限制
     if current_user.getTotalCredits() + course.credit > 25:
         flash("學分數不得高於25學分")
         return redirect(url_for("views.search"))
-    selection=Selections(current_user.student_id,course_id) #新增一個要加到資料庫的資料
-    if course.remaining_quota>=1:
-        db.session.add(selection)
-        #Selections.query.filter_by(student_id=current_user.student_id, course_id=course_id).append()
-        course.remaining_quota-=1
-        db.session.commit() #更新至資料庫內
+
+    # 查詢學生選課記錄
+    existing_selection = Selections.query.filter_by(
+        student_id=current_user.student_id,
+        course_id=course_id
+    ).first()
+
+    # 已存在選課記錄的情況處理
+    if existing_selection:
+        if existing_selection.class_state == "加選":
+            flash("課程已加選")
+            return redirect(url_for("views.search"))
+        elif existing_selection.class_state == "關注":
+            # 更新關注狀態為加選
+            existing_selection.class_state = "加選"
+            if course.remaining_quota >= 1:
+                course.remaining_quota -= 1
+                db.session.commit()
+                flash("課程已成功從關注狀態更新為加選")
+                return redirect(url_for("views.search"))
+            else:
+                flash("課程餘額不足")
+                return redirect(url_for("views.search"))
+
+    # 處理加選邏輯（沒有選課記錄的情況）
+    if course.remaining_quota >= 1:
+        new_selection = Selections(
+            student_id=current_user.student_id,
+            course_id=course_id,
+            class_state="加選"
+        )
+        db.session.add(new_selection)
+        course.remaining_quota -= 1
+        db.session.commit()
         flash("加選成功")
-        return redirect(url_for("views.search")) 
+        return redirect(url_for("views.search"))
     else:
-        flash("餘額不足")
-        return redirect(url_for("views.search")) 
+        flash("課程餘額不足")
+        return redirect(url_for("views.search"))
     
+@login_required
+@views.route('/follow/<course_id>', methods=["GET", "POST"])
+def add_follow(course_id):
+    """
+    - 如果課程已加選或已關注，阻止再次關注。
+    """
+    # 查詢是否已存在選課紀錄
+    existing_selection = Selections.query.filter_by(
+        student_id=current_user.student_id,
+        course_id=course_id
+    ).first()
+
+    # 若課程已加選或已關注，阻止操作
+    if existing_selection:
+        if existing_selection.class_state == "加選":
+            flash("課程已加選，無法再次關注")
+            return redirect(url_for("views.search"))
+        elif existing_selection.class_state == "關注":
+            flash("課程已關注，無法重複關注")
+            return redirect(url_for("views.search"))
+
+    # 新增關注記錄
+    new_selection = Selections(
+        student_id=current_user.student_id,
+        course_id=course_id,
+        class_state="關注"
+    )
+    db.session.add(new_selection)
+    db.session.commit()
+
+    flash("課程關注成功")
+    return redirect(url_for("views.search"))
