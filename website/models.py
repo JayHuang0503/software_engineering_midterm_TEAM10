@@ -27,7 +27,7 @@ class Students(db.Model, UserMixin):
         totalCredits = 0
         for selection in self.selections:
             course = Courses.query.get(selection.course_id)
-            if course:
+            if course and selection.class_state == "加選":
                 totalCredits += course.credit
         return totalCredits
 

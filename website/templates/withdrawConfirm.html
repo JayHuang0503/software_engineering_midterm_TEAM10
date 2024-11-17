@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}確認退選{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h3>確認退選課程</h3>
+        </div>
+        <div class="card-body">
+            <h5>課程資訊：</h5>
+            <p>課程名稱：{{ course.course_name }}</p>
+            <p>學分數：{{ course.credit }}</p>
+            <p class="text-danger">退選後總學分：{{ current_user.getTotalCredits() - course.credit }}</p>
+            
+            <form method="POST">
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-danger">確認退選</button>
+                    <a href="{{ url_for('views.personal_schedule') }}" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
