@@ -69,8 +69,15 @@ def search():
             target = Courses.query.all()
 
         if target != None:
+            # Get the courses that this student has added
+            added_courses = [s.course_id for s in Selections.query.filter_by(student_id=current_user.student_id, class_state="加選").all()]
+            # print("added:", added_courses)
             for i in range(len(target)):
                 target[i] = target[i].__dict__
+                if target[i]["course_id"] in added_courses:
+                    target[i]["show_add_button"] = False
+                else:
+                    target[i]["show_add_button"] = True
         return render_template("search.html", user=current_user, target_courses=target)
     else:
         return render_template("search.html", user=current_user, first_time=True)
@@ -103,7 +110,7 @@ def course_content(course_id):
         target_course["course_time"] = new_course_time
         print(target_course)
         return render_template("course_content.html", user=current_user, target_course=target_course)
-    
+
 @login_required
 @views.route('/withdraw/<course_id>', methods=["POST"])
 def withdraw():
@@ -112,14 +119,14 @@ def withdraw():
     if current_user.getTotalCredits() - course.credit < 12: # 學分數不得低於12學分
         flash("學分數不得低於12學分")
         return redirect(url_for("views.selections")) ###要回到我的課表
-    
+
     Selections.query.filter_by(student_id=current_user.student_id, course_id=course_id).delete()
     db.session.commit()
     flash("退選成功")
     return redirect(url_for("views.selections")) ###要回到我的課表
 
-@views.route('/schedule')
 @login_required
+@views.route('/schedule')
 def personal_schedule():
     # 準備課表數據結構
     schedule = defaultdict(list)
@@ -216,7 +223,7 @@ def add_selection(course_id):
     else:
         flash("課程餘額不足")
         return redirect(url_for("views.search"))
-    
+
 @login_required
 @views.route('/follow/<course_id>', methods=["GET", "POST"])
 def add_follow(course_id):

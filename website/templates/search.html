@@ -81,8 +81,7 @@
                 <!-- <th scope="col">節次</th> -->
                 <!-- <th scope="col">授課語言</th> -->
                 <th scope="col">開課班級</th>
-                <th scope="col">剩餘名額/開課名額</th>              
-                
+                <th scope="col">剩餘名額/開課名額</th>
             </tr>
         </thead>
         <tbody>
@@ -103,8 +102,11 @@
                 <!-- <td>{{target_course["lang"]}}</td> -->
                 <td>{{target_course["course_for"]}}</td>
                 <td>{{target_course["remaining_quota"]}} / {{target_course["course_quota"]}}</td>
-                <td><a href="follow/{{target_course['course_id']}}" class="btn btn-outline-dark">關注</a></td>
-                <td><a href="add/{{target_course['course_id']}}"  class="btn btn-primary">加選</a></td>
+                <td><a href="follow/{{target_course['course_id']}}" class="btn btn-outline-dark">關注</a>
+                {% if target_course["show_add_button"] is true %}
+                <a href="add/{{target_course['course_id']}}" class="btn btn-primary">加選</a>
+                {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
