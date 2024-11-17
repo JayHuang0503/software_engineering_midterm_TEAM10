@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<style>
+</style>
+<h1 align="left">Search</h1>
+{% if user.is_authenticated %}
+<form method="POST">
+    <div class="mb-3">
+        <label for="courseId" class="form-label">課程代碼</label>
+        <input type="text" name="course_id" class="form-control" id="courseId">
+    </div>
+    <div class="mb-3">
+        <label for="courseName" class="form-label">課程名稱</label>
+        <input type="text" name="course_name" class="form-control" id="courseName">
+    </div>
+    <div class="mb-3">
+        <label for="teacherName" class="form-label">教師姓名</label>
+        <input type="text" name="teacher_name" class="form-control" id="teacherName">
+    </div>
+    <div class="mb-3">
+        <label for="weekday" class="form-label">星期</label>
+        <select name="weekday" class="form-select" id="weekday">
+            <option value="0" selected>請選擇星期</option>
+            <option value="1">一</option>
+            <option value="2">二</option>
+            <option value="3">三</option>
+            <option value="4">四</option>
+            <option value="5">五</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="courseTime" class="form-label">節次</label>
+        <select name="course_time" class="form-select" id="courseTime">
+            <option value="0" selected>請選擇節次</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="lang" class="form-label">授課語言</label>
+        <select name="lang" class="form-select" id="lang">
+            <option value="0" selected>請選擇授課語言</option>
+            <option value="英文">英文</option>
+            <option value="英文">英文</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="courseFor" class="form-label">開課班級</label>
+        <input type="text" name="course_for" class="form-control" id="courseFor">
+    </div>
+    <button type="submit" class="btn btn-primary">搜尋</button>
+</form>
+
+<div>
+    <br>
+    {% if target_courses %}
+    <h3>查詢結果</h3>
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">課程代碼</th>
+                <th scope="col">課程名稱</th>
+                <th scope="col">學分數</th>
+                <th scope="col">必選修</th>
+                <!-- <th scope="col">授課教師</th> -->
+                <!-- <th scope="col">星期</th> -->
+                <!-- <th scope="col">節次</th> -->
+                <!-- <th scope="col">授課語言</th> -->
+                <th scope="col">開課班級</th>
+                <th scope="col">剩餘名額/開課名額</th>              
+                
+            </tr>
+        </thead>
+        <tbody>
+            {% for target_course in target_courses %}
+            <tr>
+                <th scope="row">{{loop.index}}</th>
+                <td>
+                    <a href="course/{{target_course['course_id']}}">
+                        {{target_course["course_id"]}}
+                    </a>
+                </td>
+                <td>{{target_course["course_name"]}}</td>
+                <td>{{target_course["credit"]}}</td>
+                <td>{{target_course["course_type"]}}</td>
+                <!-- <td>{{target_course["teacher_name"]}}</td> -->
+                <!-- <td>{{target_course["weekday"]}}</td> -->
+                <!-- <td>{{target_course["course_time"]}}</td> -->
+                <!-- <td>{{target_course["lang"]}}</td> -->
+                <td>{{target_course["course_for"]}}</td>
+                <td>{{target_course["remaining_quota"]}} / {{target_course["course_quota"]}}</td>
+                <td><a href="follow/{{target_course['course_id']}}" class="btn btn-outline-dark">關注</a></td>
+                <td><a href="add/{{target_course['course_id']}}"  class="btn btn-primary">加選</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+        {% elif not first_time %}
+    <h3>查無結果</h3>
+    {% endif %}
+</div>
+
+{% else %}
+<h1>Please login</h1>
+{% endif %}
+{% endblock %}
+
+{% block footer %}
+{% include 'footer.html' %}
+{% endblock %}
