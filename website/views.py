@@ -182,7 +182,7 @@ def personal_schedule():
                 is_added = course.course_id in added_courses
                 is_followed = course.course_id in followed_courses
                 is_conflict = False
-                if course.course_type == "必修":
+                if course.course_type == "必修" and course.course_for == current_user.major:
                     is_necessary = True
                 else:
                     is_necessary = False

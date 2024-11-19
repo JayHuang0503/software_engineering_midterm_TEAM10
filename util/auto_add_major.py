@@ -10,7 +10,7 @@ if __name__ == "__main__":
     major_courses = []
     for student in predefine_students:
         for course in predefine_courses:
-            if student[2] == course[10]:
+            if student[2] == course[10] and course[4] == "必修":
                 if course[6] > 0:
                     con.execute("UPDATE courses set remaining_quota=remaining_quota-? where course_id = ?", (1, course[0])) 
                     con.commit()

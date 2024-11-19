@@ -3,8 +3,10 @@ import sqlite3
 # (student_id, name, major)
 predefine_students = [
     ("D00001", "Student 1", "資訊一甲"),
-    ("D00002", "Student 2", "會計二甲"),
-    ("D00003", "Student 3", "外文一甲"),
+    ("D00002", "Student 2", "資訊二甲"),
+    ("D00003", "Student 3", "資訊二甲"),
+    ("D00004", "Student 4", "會計二甲"),
+    ("D00005", "Student 5", "外文一甲"),
 ]
 
 
