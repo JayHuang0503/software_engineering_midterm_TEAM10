@@ -144,6 +144,85 @@ def course_content(course_id):
         return render_template("course_content.html", user=current_user, target_course=target_course)
 
 @login_required
+@views.route('/add/<course_id>', methods=["GET", "POST"])
+def add_selection(course_id):
+    # 查詢課程資料
+    course = Courses.query.filter_by(course_id=course_id).first()
+    if not course:
+        flash("課程不存在", category="error")
+        return redirect(url_for("views.search"))
+
+    # 解析欲加選課程的時間
+    course_weekday = course.weekday  # 課程的星期幾
+    course_time = course.course_time  # 課程的時間段，例如 "08:00-10:00"
+
+    # 檢查學分是否超出限制
+    if current_user.getTotalCredits() + course.credit > 25:
+        flash("學分數不得高於25學分", category="error")
+        return redirect(url_for("views.search"))
+
+    # 查詢學生已加選課程
+    # added_courses = Selections.query.filter_by(student_id=current_user.student_id, class_state="加選").all()
+
+    # 獲取當前學生的已加選課程
+    added_courses = [s.course_id for s in Selections.query.filter_by(student_id=current_user.student_id, class_state="加選").all()]
+    weekdays = course.weekday.split(";")
+    period_list = course.course_time.split(";")
+    for weekday, periods in zip(weekdays, period_list):
+        for period in map(int, periods.split(",")):
+            # print(f"weekday: {weekday}, time: {period}")
+            for i in added_courses:
+                c = Courses.query.filter_by(course_id=i).first()
+                w = c.weekday.split(";")
+                p = c.course_time.split(";")
+                for we, pe in zip(w, p):
+                    for per in map(int, pe.split(",")):
+                        # print(f"we:{we}, pe:{per}")
+                        if weekday == we and period == per:
+                            # print("conflict")
+                            flash(f"加選失敗，課程時間與已選課程({c.course_name})衝突", category="error")
+                            return redirect(url_for("views.search"))
+
+    # 查詢學生選課記錄
+    existing_selection = Selections.query.filter_by(
+        student_id=current_user.student_id,
+        course_id=course_id
+    ).first()
+
+    # 已存在選課記錄的情況處理
+    if existing_selection:
+        if existing_selection.class_state == "加選":
+            flash("加選失敗，課程已加選", category="error")
+            return redirect(url_for("views.search"))
+        elif existing_selection.class_state == "關注":
+            # 更新關注狀態為加選
+            existing_selection.class_state = "加選"
+            if course.remaining_quota >= 1:
+                course.remaining_quota -= 1
+                db.session.commit()
+                flash("課程已成功從關注狀態更新為加選", category="info")
+                return redirect(url_for("views.search"))
+            else:
+                flash("課程餘額不足", category="error")
+                return redirect(url_for("views.search"))
+
+    # 處理加選邏輯（沒有選課記錄的情況）
+    if course.remaining_quota >= 1:
+        new_selection = Selections(
+            student_id=current_user.student_id,
+            course_id=course_id,
+            class_state="加選"
+        )
+        db.session.add(new_selection)
+        course.remaining_quota -= 1
+        db.session.commit()
+        flash("加選成功")
+        return redirect(url_for("views.search"))
+    else:
+        flash("課程餘額不足", category="error")
+        return redirect(url_for("views.search"))
+
+@login_required
 @views.route('/withdraw/<course_id>', methods=["GET", "POST"])
 def withdraw(course_id):
     course = Courses.query.filter_by(course_id=course_id).first()
@@ -212,80 +291,6 @@ def personal_schedule():
                 })
 
     return render_template("schedule.html", user=current_user, schedule=schedule, total_credits=total_credits)
-
-from collections import defaultdict
-
-@login_required
-@views.route('/add/<course_id>', methods=["GET", "POST"])
-def add_selection(course_id):
-    # 查詢課程資料
-    course = Courses.query.filter_by(course_id=course_id).first()
-    if not course:
-        flash("課程不存在", category="error")
-        return redirect(url_for("views.search"))
-
-    # 解析欲加選課程的時間
-    course_weekday = course.weekday  # 課程的星期幾
-    course_time = course.course_time  # 課程的時間段，例如 "08:00-10:00"
-
-    # 檢查學分是否超出限制
-    if current_user.getTotalCredits() + course.credit > 25:
-        flash("學分數不得高於25學分", category="error")
-        return redirect(url_for("views.search"))
-
-    # 查詢學生已加選課程
-    added_courses = Selections.query.filter_by(student_id=current_user.student_id, class_state="加選").all()
-
-    # 建立學生已選課程的時間表
-    schedule = defaultdict(list)
-    for selected in added_courses:
-        selected_course = Courses.query.filter_by(course_id=selected.course_id).first()
-        if selected_course:
-            schedule[selected_course.weekday].append(selected_course.course_time)
-
-    # 檢查是否與已選課程時間衝突
-    if course_time in schedule[course_weekday]:
-        flash("加選失敗，課程時間與已選課程衝突")
-        return redirect(url_for("views.search"))
-
-    # 查詢學生選課記錄
-    existing_selection = Selections.query.filter_by(
-        student_id=current_user.student_id,
-        course_id=course_id
-    ).first()
-
-    # 已存在選課記錄的情況處理
-    if existing_selection:
-        if existing_selection.class_state == "加選":
-            flash("加選失敗，課程已加選", category="error")
-            return redirect(url_for("views.search"))
-        elif existing_selection.class_state == "關注":
-            # 更新關注狀態為加選
-            existing_selection.class_state = "加選"
-            if course.remaining_quota >= 1:
-                course.remaining_quota -= 1
-                db.session.commit()
-                flash("課程已成功從關注狀態更新為加選", category="info")
-                return redirect(url_for("views.search"))
-            else:
-                flash("課程餘額不足", category="error")
-                return redirect(url_for("views.search"))
-
-    # 處理加選邏輯（沒有選課記錄的情況）
-    if course.remaining_quota >= 1:
-        new_selection = Selections(
-            student_id=current_user.student_id,
-            course_id=course_id,
-            class_state="加選"
-        )
-        db.session.add(new_selection)
-        course.remaining_quota -= 1
-        db.session.commit()
-        flash("加選成功")
-        return redirect(url_for("views.search"))
-    else:
-        flash("課程餘額不足", category="error")
-        return redirect(url_for("views.search"))
 
 @login_required
 @views.route('/follow/<course_id>', methods=["GET", "POST"])

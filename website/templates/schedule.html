@@ -98,7 +98,11 @@
                     {% for course in courses %}
                         {% if course.is_added or course.is_followed %}
                             <div>
-                                <strong>{{ course.course_name }}</strong><br>
+                                <strong>
+                                    <a href="course/{{course.course_id}}", class="link-dark link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">
+                                        {{ course.course_name }}
+                                    </a>
+                                </strong><br>
                                 {%if course.is_added and not course.is_necessary %}
                                     <a href="withdraw/{{course.course_id}}" class="btn btn-warning">退選</a>
                                 {% endif %}
