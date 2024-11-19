@@ -5,7 +5,7 @@
 </style>
 <div>
     {% if user.is_authenticated %}
-    <h2>Welcome, {{user.name}}</h2>
+    <h2>Welcome, {{user.major}}的{{user.name}}</h2>
     <a href="/search">搜尋課程</a>
     <a href="/schedule">個人課表</a>
 

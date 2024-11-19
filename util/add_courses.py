@@ -1,8 +1,5 @@
 import sqlite3
 
-con = sqlite3.connect("instance/database.db")
-cur = con.cursor()
-
 # (course_id, course_name, teacher_name, credit, course_type, course_quota, remaining_quota, weekday, course_time, lang, class_for)
 # weekday用數字加分號的方式, 例如: "1;3", 代表星期一跟星期三
 # course_time用逗號與分號的方式, 例如: "2,3,4;7,8", 代表第2,3,4節 跟 7,8節
@@ -17,5 +14,10 @@ predefine_courses = [
     ("0006", "管理學", "Teacher 4", 3, "選修", 70, 70, "3;4"    , "3,4;9,10"      , "中文", "會計二甲"),
 ]
 
-cur.executemany("INSERT INTO courses VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", predefine_courses)
-con.commit()
+
+
+if __name__ == "__main__":
+    con = sqlite3.connect("instance/database.db")
+    cur = con.cursor()
+    cur.executemany("INSERT INTO courses VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", predefine_courses)
+    con.commit()
