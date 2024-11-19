@@ -150,7 +150,7 @@ def withdraw(course_id):
 
     if request.method == "GET":
         if current_user.getTotalCredits() - course.credit < 12: # 學分數不得低於12學分
-            flash("學分數不得低於12學分")
+            flash("學分數不得低於12學分", "error")
             return redirect(url_for("views.personal_schedule"))
         return render_template("withdrawConfirm.html", user=current_user, course=course)
 
