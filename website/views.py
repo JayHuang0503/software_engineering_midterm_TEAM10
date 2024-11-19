@@ -153,7 +153,7 @@ def withdraw(course_id):
             flash("學分數不得低於12學分")
             return redirect(url_for("views.personal_schedule"))
         return render_template("withdrawConfirm.html", user=current_user, course=course)
-    
+
     elif request.method == "POST":
         course.remaining_quota += 1
         Selections.query.filter_by(student_id=current_user.student_id, course_id=course_id).delete()
@@ -182,7 +182,7 @@ def personal_schedule():
                 is_added = course.course_id in added_courses
                 is_followed = course.course_id in followed_courses
                 is_conflict = False
-                if course.course_type == "必修":
+                if course.course_type == "必修" and course.course_for == current_user.major:
                     is_necessary = True
                 else:
                     is_necessary = False
@@ -222,7 +222,7 @@ def add_selection(course_id):
     course = Courses.query.filter_by(course_id=course_id).first()
     if not course:
         flash("課程不存在", category="error")
-        return redirect(url_for("views.search", user=current_user, target_courses=lebel_targets(fileter_targets())))
+        return redirect(url_for("views.search"))
 
     # 解析欲加選課程的時間
     course_weekday = course.weekday  # 課程的星期幾
@@ -231,7 +231,7 @@ def add_selection(course_id):
     # 檢查學分是否超出限制
     if current_user.getTotalCredits() + course.credit > 25:
         flash("學分數不得高於25學分", category="error")
-        return redirect(url_for("views.search", user=current_user, target_courses=lebel_targets(fileter_targets())))
+        return redirect(url_for("views.search"))
 
     # 查詢學生已加選課程
     added_courses = Selections.query.filter_by(student_id=current_user.student_id, class_state="加選").all()
@@ -258,7 +258,7 @@ def add_selection(course_id):
     if existing_selection:
         if existing_selection.class_state == "加選":
             flash("加選失敗，課程已加選", category="error")
-            return redirect(url_for("views.search", user=current_user, target_courses=lebel_targets(fileter_targets())))
+            return redirect(url_for("views.search"))
         elif existing_selection.class_state == "關注":
             # 更新關注狀態為加選
             existing_selection.class_state = "加選"
@@ -266,10 +266,10 @@ def add_selection(course_id):
                 course.remaining_quota -= 1
                 db.session.commit()
                 flash("課程已成功從關注狀態更新為加選", category="info")
-                return redirect(url_for("views.search", user=current_user, target_courses=lebel_targets(fileter_targets())))
+                return redirect(url_for("views.search"))
             else:
                 flash("課程餘額不足", category="error")
-                return redirect(url_for("views.search", user=current_user, target_courses=lebel_targets(fileter_targets())))
+                return redirect(url_for("views.search"))
 
     # 處理加選邏輯（沒有選課記錄的情況）
     if course.remaining_quota >= 1:
@@ -282,10 +282,10 @@ def add_selection(course_id):
         course.remaining_quota -= 1
         db.session.commit()
         flash("加選成功")
-        return redirect(url_for("views.search", user=current_user, target_courses=lebel_targets(fileter_targets())))
+        return redirect(url_for("views.search"))
     else:
         flash("課程餘額不足", category="error")
-        return redirect(url_for("views.search", user=current_user, target_courses=lebel_targets(fileter_targets())))
+        return redirect(url_for("views.search"))
 
 @login_required
 @views.route('/follow/<course_id>', methods=["GET", "POST"])
@@ -303,13 +303,13 @@ def add_follow(course_id):
     if existing_selection:
         if existing_selection.class_state == "加選":
             flash("課程已加選，無法再次關注", category="error")
-            return redirect(url_for("views.search", user=current_user, target_courses=lebel_targets(fileter_targets())))
+            return redirect(url_for("views.search"))
         elif existing_selection.class_state == "關注":
             # flash("課程已關注，無法重複關注")
             flash("已取消關注此課程", category="info")
             db.session.delete(existing_selection)
             db.session.commit()
-            return redirect(url_for("views.search", user=current_user, target_courses=lebel_targets(fileter_targets())))
+            return redirect(url_for("views.search"))
 
     # 新增關注記錄
     new_selection = Selections(
@@ -321,4 +321,4 @@ def add_follow(course_id):
     db.session.commit()
 
     flash("課程關注成功")
-    return redirect(url_for("views.search", user=current_user, target_courses=lebel_targets(fileter_targets())))
+    return redirect(url_for("views.search"))
