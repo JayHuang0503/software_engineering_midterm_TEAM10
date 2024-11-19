@@ -8,21 +8,24 @@ class Students(db.Model, UserMixin):
     Attributes:
         student_id : 學號
         name       : 學生姓名
+        major      : 系級
     '''
     __tablename__ = "students"
 
-    def __init__(self, student_id, name):
+    def __init__(self, student_id, name, major):
         self.student_id = student_id
         self.name = name
+        self.major = major
 
     def get_id(self):
         return (self.student_id)
 
     student_id = db.Column(db.String(6), primary_key=True)
     name = db.Column(db.String(50))
+    major = db.Column(db.String(50))
 
     selections = db.relationship('Selections', backref='student', lazy=True)
-    
+
     def getTotalCredits(self): # 取得學生學分數
         totalCredits = 0
         for selection in self.selections:
@@ -32,7 +35,7 @@ class Students(db.Model, UserMixin):
         return totalCredits
 
     def __repr__(self):
-        return f"stuent id: {self.student_id}, name: {self.name}"
+        return f"stuent id: {self.student_id}, name: {self.name}, major: {self.major}"
 
 class Courses(db.Model):
     '''
