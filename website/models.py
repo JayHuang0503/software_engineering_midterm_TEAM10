@@ -27,7 +27,7 @@ class Students(db.Model, UserMixin):
         totalCredits = 0
         for selection in self.selections:
             course = Courses.query.get(selection.course_id)
-            if course:
+            if course and selection.class_state == "加選":
                 totalCredits += course.credit
         return totalCredits
 
@@ -64,9 +64,6 @@ class Courses(db.Model):
         self.lang = lang
         self.course_for = course_for
 
-    def get_id(self):
-        return self.course_id
-
     course_id = db.Column(db.String(4), primary_key=True)
     course_name = db.Column(db.String(50))
     teacher_name = db.Column(db.String(50))
@@ -79,15 +76,16 @@ class Courses(db.Model):
     lang = db.Column(db.String(50))
     course_for = db.Column(db.String(50))
 
-    # class_state = db.Column(db.String(50))
-
     def __repr__(self):
         return f"course id: {self.course_id}, course name: {self.course_name}, teacher name: {self.teacher_name}, credit: {self.credit}, course type: {self.course_type}, course quota: {self.course_quota}, remaining quota: {self.remaining_quota}, weekday: {self.weekday}, course time: {self.course_time}, language: {self.lang}, course for: {self.course_for}"
 
     def to_dict(self):
         return {field.name:getattr(self, field.name) for field in self.__table__.c}
 
-class Selections(db.Model):  
+    def get_id(self):
+        return self.course_id
+
+class Selections(db.Model):
     '''
     Attributes:
         student_id : 學號, string
@@ -100,7 +98,7 @@ class Selections(db.Model):
         self.student_id = student_id
         self.course_id = course_id
         self.class_state = class_state
-    
+
     student_id = db.Column(db.String(6), db.ForeignKey("students.student_id"), primary_key=True)
     course_id = db.Column(db.String(4), db.ForeignKey("courses.course_id"), primary_key=True)
     class_state = db.Column(db.String(20), nullable=False)  # 加選或關注
